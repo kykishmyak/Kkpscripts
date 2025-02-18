@@ -1,7 +1,8 @@
 -- Load necessary services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local Camera = game:GetService("Workspace").CurrentCamera
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
 
 -- Define colors
 local Green = Color3.fromRGB(0, 255, 0)
@@ -10,6 +11,7 @@ local Red = Color3.fromRGB(255, 0, 0)
 -- Aimbot settings
 local player = Players.LocalPlayer
 local aiming = false
+local pcMod = false
 local radius = 150
 local useTeamCheck = true
 local useWallCheck = true
@@ -49,7 +51,7 @@ local function isTargetVisible(targetPosition)
     end
     local ray = Ray.new(Camera.CFrame.Position, (targetPosition - Camera.CFrame.Position).unit * 1000)
     local ignoreList = {player.Character}
-    local hit, position = game.Workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
+    local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
 
     if hit then
         local targetPlayer = Players:GetPlayerFromCharacter(hit.Parent)
@@ -403,6 +405,25 @@ lockOnButton.MouseButton1Click:Connect(function()
     end
 end)
 
+-- PC Mod button
+local pcModButton = Instance.new("TextButton")
+pcModButton.Size = UDim2.new(1, 0, 0, 30)
+pcModButton.Text = "PC Mod: OFF"
+pcModButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+pcModButton.TextColor3 = Color3.new(1, 1, 1)
+pcModButton.Font = Enum.Font.SciFi
+pcModButton.ZIndex = 10
+pcModButton.Parent = scrollingFrame
+
+local pcModCorner = Instance.new("UICorner")
+pcModCorner.CornerRadius = UDim.new(0, 6)
+pcModCorner.Parent = pcModButton
+
+pcModButton.MouseButton1Click:Connect(function()
+    pcMod = not pcMod
+    pcModButton.Text = "PC Mod: " .. (pcMod and "ON" or "OFF")
+end)
+
 -- Minimize button
 local minimizeButton = Instance.new("TextButton")
 minimizeButton.Size = UDim2.new(0, 30, 0, 30)
@@ -505,10 +526,21 @@ espToggleButton.MouseButton1Click:Connect(function()
     espToggleButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
 end)
 
+-- Handle character respawn
+player.CharacterAdded:Connect(function(character)
+    -- Reinitialize references if needed
+    currentTarget = nil
+end)
+
 -- Main loop for aiming and ESP
 RunService.RenderStepped:Connect(function()
-    if aiming then
+    if pcMod and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        aiming = true
         aimAtTarget()
+    else
+        aiming = false
+        drawing.Color = Color3.new(1, 0, 0)
+        currentTarget = nil
     end
     UpdateESP()
 end)
