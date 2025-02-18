@@ -534,13 +534,22 @@ end)
 
 -- Main loop for aiming and ESP
 RunService.RenderStepped:Connect(function()
-    if pcMod and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-        aiming = true
-        aimAtTarget()
+    if pcMod then
+        if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+            aiming = true
+            aimAtTarget()
+        else
+            aiming = false
+            drawing.Color = Color3.new(1, 0, 0)
+            currentTarget = nil
+        end
     else
-        aiming = false
-        drawing.Color = Color3.new(1, 0, 0)
-        currentTarget = nil
+        if aiming then
+            aimAtTarget()
+        else
+            drawing.Color = Color3.new(1, 0, 0)
+            currentTarget = nil
+        end
     end
     UpdateESP()
 end)
