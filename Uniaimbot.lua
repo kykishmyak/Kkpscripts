@@ -1,55 +1,80 @@
-local player = game.Players.LocalPlayer
-local camera = game.Workspace.CurrentCamera
+-- Load necessary services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = game:GetService("Workspace").CurrentCamera
+
+-- Define colors
+local Green = Color3.fromRGB(0, 255, 0)
+local Red = Color3.fromRGB(255, 0, 0)
+
+-- Aimbot settings
+local player = Players.LocalPlayer
 local aiming = false
 local radius = 150
 local useTeamCheck = true
 local useWallCheck = true
-local targetPart = "Head" -- Целевая часть по умолчанию (Head или Torso)
-local lockOnTarget = false -- Зафиксировать цель до её смерти или выхода из радиуса
-local currentTarget = nil -- Текущая зафиксированная цель
+local targetPart = "Head" -- Default target part (Head or Torso)
+local lockOnTarget = false -- Lock onto target until death or out of radius
+local currentTarget = nil -- Current locked target
+local espEnabled = true -- Toggle for ESP functionality
 
-local drawing = Drawing.new("Circle")
-drawing.Color = Color3.new(1, 0, 0)
-drawing.Thickness = 2
-drawing.Radius = radius
-drawing.Filled = false
-drawing.Visible = true
+-- ESP settings
+local esp = {}
+
+-- Function to create a new drawing object
+local function NewDrawing(className, properties)
+    local drawing = Drawing.new(className)
+    for property, value in pairs(properties) do
+        drawing[property] = value
+    end
+    return drawing
+end
+
+-- Aimbot circle drawing
+local drawing = NewDrawing("Circle", {
+    Color = Color3.new(1, 0, 0),
+    Thickness = 2,
+    Radius = radius,
+    Filled = false,
+    Visible = true
+})
 
 local screenSize = workspace.CurrentCamera.ViewportSize
 drawing.Position = Vector2.new(screenSize.X / 2, screenSize.Y / 2)
 
--- Функция проверки видимости цели
+-- Function to check target visibility
 local function isTargetVisible(targetPosition)
     if not useWallCheck then
         return true
     end
-    local ray = Ray.new(camera.CFrame.Position, (targetPosition - camera.CFrame.Position).unit * 1000)
+    local ray = Ray.new(Camera.CFrame.Position, (targetPosition - Camera.CFrame.Position).unit * 1000)
     local ignoreList = {player.Character}
     local hit, position = game.Workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
 
     if hit then
-        local targetPlayer = game.Players:GetPlayerFromCharacter(hit.Parent)
+        local targetPlayer = Players:GetPlayerFromCharacter(hit.Parent)
         return targetPlayer ~= nil
     end
     return false
 end
 
+-- Function to get the closest target in radius
 local function getClosestTargetInRadius()
     local target = nil
     local shortestDistance = math.huge
 
-    for _, playerModel in pairs(game.Players:GetPlayers()) do
+    for _, playerModel in pairs(Players:GetPlayers()) do
         if playerModel ~= player and playerModel.Character then
             local character = playerModel.Character
             local humanoid = character:FindFirstChild("Humanoid")
             local targetPartInstance = character:FindFirstChild(targetPart)
             if humanoid and targetPartInstance and humanoid.Health > 0 then
-                -- Проверка на команду
+                -- Team check
                 if not useTeamCheck or (player.Team and playerModel.Team ~= player.Team) then
-                    local screenPos, onScreen = camera:WorldToViewportPoint(targetPartInstance.Position)
+                    local screenPos, onScreen = Camera:WorldToViewportPoint(targetPartInstance.Position)
                     local distanceToCenter = (Vector2.new(screenPos.X, screenPos.Y) - drawing.Position).magnitude
                     if distanceToCenter <= radius and isTargetVisible(targetPartInstance.Position) then
-                        local distance = (targetPartInstance.Position - camera.CFrame.Position).magnitude
+                        local distance = (targetPartInstance.Position - Camera.CFrame.Position).magnitude
                         if distance < shortestDistance then
                             shortestDistance = distance
                             target = targetPartInstance
@@ -63,77 +88,143 @@ local function getClosestTargetInRadius()
     return target
 end
 
+-- Function to aim at the target
 local function aimAtTarget()
     if currentTarget and currentTarget.Parent and currentTarget.Parent:FindFirstChild("Humanoid") and currentTarget.Parent.Humanoid.Health > 0 then
-        -- Проверка, находится ли текущая цель в радиусе
-        local screenPos, onScreen = camera:WorldToViewportPoint(currentTarget.Position)
+        -- Check if the current target is within the radius
+        local screenPos, onScreen = Camera:WorldToViewportPoint(currentTarget.Position)
         local distanceToCenter = (Vector2.new(screenPos.X, screenPos.Y) - drawing.Position).magnitude
         if distanceToCenter <= radius and isTargetVisible(currentTarget.Position) then
-            camera.CFrame = CFrame.new(camera.CFrame.Position, currentTarget.Position)
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, currentTarget.Position)
             drawing.Color = Color3.new(0, 1, 0)
             return
         else
-            currentTarget = nil -- Цель вне радиуса, сброс
+            currentTarget = nil -- Target out of radius, reset
         end
     end
 
-    -- Поиск новой цели
+    -- Find a new target
     local target = getClosestTargetInRadius()
     if target then
         currentTarget = target
-        camera.CFrame = CFrame.new(camera.CFrame.Position, target.Position)
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
         drawing.Color = Color3.new(0, 1, 0)
     else
         drawing.Color = Color3.new(1, 0, 0)
     end
 end
 
--- Создание интерфейса
+-- Function to update the ESP
+local function UpdateESP()
+    if not espEnabled then
+        for _, plr in pairs(esp) do
+            plr.box.Visible = false
+            plr.name.Visible = false
+        end
+        return
+    end
+
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= Players.LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
+            local rootPart = plr.Character.HumanoidRootPart
+
+            -- Determine the color based on the team
+            local color = plr.TeamColor == Players.LocalPlayer.TeamColor and Green or Red
+
+            if not esp[plr] then
+                esp[plr] = {
+                    box = NewDrawing("Square", {
+                        Thickness = 2,
+                        Color = color,
+                        Filled = false
+                    }),
+                    name = NewDrawing("Text", {
+                        Text = plr.Name,
+                        Size = 14, -- Adjusted text size
+                        Center = true,
+                        Outline = true,
+                        Color = color
+                    })
+                }
+            else
+                -- Update the color if the player's team changes
+                esp[plr].box.Color = color
+                esp[plr].name.Color = color
+            end
+
+            local box = esp[plr].box
+            local name = esp[plr].name
+
+            -- Box ESP
+            local vector, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+            if onScreen then
+                local size = 2000 / vector.Z -- Adjust size based on distance
+                box.Size = Vector2.new(size, size)
+                box.Position = Vector2.new(vector.X - size / 2, vector.Y - size / 2)
+                box.Visible = true
+
+                -- Name display
+                name.Position = Vector2.new(vector.X, vector.Y - size / 2 - 20)
+                name.Visible = true
+            else
+                box.Visible = false
+                name.Visible = false
+            end
+        else
+            -- Remove ESP elements if the character is no longer valid
+            if esp[plr] then
+                esp[plr].box.Visible = false
+                esp[plr].name.Visible = false
+                esp[plr] = nil
+            end
+        end
+    end
+end
+
+-- Create the GUI interface
 local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.Parent = player:WaitForChild("PlayerGui")
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Фон
+-- Background frame
 local background = Instance.new("Frame")
-background.Size = UDim2.new(0, 220, 0, 300) -- Увеличена высота для новой кнопки
+background.Size = UDim2.new(0, 220, 0, 300)
 background.Position = UDim2.new(0, 10, 0, 10)
 background.BackgroundColor3 = Color3.new(0, 0, 0)
 background.BorderSizePixel = 0
-background.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
+background.ZIndex = 10
 background.Parent = screenGui
 
--- Закругленные углы
+-- Rounded corners
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 8)
 corner.Parent = background
 
--- Неоновая обводка с анимацией
+-- Neon outline with animation
 local outline = Instance.new("UIStroke")
 outline.Color = Color3.new(1, 1, 0)
 outline.Thickness = 2
 outline.Parent = background
 
--- Анимация обводки
 local TweenService = game:GetService("TweenService")
 local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true)
-local tween = TweenService:Create(outline, tweenInfo, {Color = Color3.new(1, 0.8, 0)}) -- Темно-желтый к ярко-желтому
+local tween = TweenService:Create(outline, tweenInfo, {Color = Color3.new(1, 0.8, 0)})
 tween:Play()
 
--- Панель перетаскивания (для перетаскивания интерфейса)
+-- Drag bar for moving the GUI
 local dragBar = Instance.new("Frame")
-dragBar.Size = UDim2.new(1, 0, 0, 20) -- Увеличена высота для удобства перетаскивания
-dragBar.Position = UDim2.new(0, 0, 1, 10) -- Перемещено ниже основного GUI
+dragBar.Size = UDim2.new(1, 0, 0, 20)
+dragBar.Position = UDim2.new(0, 0, 1, 10)
 dragBar.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
 dragBar.BorderSizePixel = 0
-dragBar.ZIndex = 11 -- Установим ZIndex для отображения поверх всех элементов
+dragBar.ZIndex = 11
 dragBar.Parent = background
 
--- Закругленные углы для панели перетаскивания
 local dragBarCorner = Instance.new("UICorner")
 dragBarCorner.CornerRadius = UDim.new(0, 8)
 dragBarCorner.Parent = dragBar
 
--- Перетаскивание интерфейса
+-- Drag functionality
 local dragging = false
 local dragStartPos
 local guiStartPos
@@ -163,33 +254,32 @@ dragBar.InputChanged:Connect(function(input)
     end
 end)
 
--- ScrollingFrame для кнопок
+-- Scrolling frame for buttons
 local scrollingFrame = Instance.new("ScrollingFrame")
 scrollingFrame.Size = UDim2.new(1, -20, 1, -60)
 scrollingFrame.Position = UDim2.new(0, 10, 0, 40)
 scrollingFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 scrollingFrame.BorderSizePixel = 0
 scrollingFrame.ScrollBarThickness = 8
-scrollingFrame.CanvasSize = UDim2.new(0, 0, 2, 0) -- Установите высоту CanvasSize для прокрутки
-scrollingFrame.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
+scrollingFrame.CanvasSize = UDim2.new(0, 0, 2, 0)
+scrollingFrame.ZIndex = 10
 scrollingFrame.Parent = background
 
--- Layout для автоматического размещения кнопок
+-- Layout for automatic button placement
 local layout = Instance.new("UIListLayout")
 layout.Padding = UDim.new(0, 5)
 layout.Parent = scrollingFrame
 
--- Кнопка переключения прицеливания
+-- Toggle Aim button
 local toggleButton = Instance.new("TextButton")
 toggleButton.Size = UDim2.new(1, 0, 0, 30)
 toggleButton.Text = "Toggle Aim"
 toggleButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 toggleButton.TextColor3 = Color3.new(1, 1, 1)
 toggleButton.Font = Enum.Font.SciFi
-toggleButton.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
+toggleButton.ZIndex = 10
 toggleButton.Parent = scrollingFrame
 
--- Закругленные углы для кнопок
 local buttonCorner = Instance.new("UICorner")
 buttonCorner.CornerRadius = UDim.new(0, 6)
 buttonCorner.Parent = toggleButton
@@ -199,21 +289,20 @@ toggleButton.MouseButton1Click:Connect(function()
     toggleButton.Text = aiming and "Aiming: ON" or "Aiming: OFF"
     if not aiming then
         drawing.Color = Color3.new(1, 0, 0)
-        currentTarget = nil -- Сброс цели при отключении прицеливания
+        currentTarget = nil
     end
 end)
 
--- Ввод радиуса
+-- Radius input
 local radiusInput = Instance.new("TextBox")
 radiusInput.Size = UDim2.new(1, 0, 0, 30)
 radiusInput.Text = "Radius: " .. radius
 radiusInput.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 radiusInput.TextColor3 = Color3.new(1, 1, 1)
 radiusInput.Font = Enum.Font.SciFi
-radiusInput.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
+radiusInput.ZIndex = 10
 radiusInput.Parent = scrollingFrame
 
--- Закругленные углы для текстового поля
 local textBoxCorner = Instance.new("UICorner")
 textBoxCorner.CornerRadius = UDim.new(0, 6)
 textBoxCorner.Parent = radiusInput
@@ -234,17 +323,16 @@ radiusInput.FocusLost:Connect(function()
     end
 end)
 
--- Кнопка переключения проверки команды
+-- Team Check button
 local teamCheckButton = Instance.new("TextButton")
 teamCheckButton.Size = UDim2.new(1, 0, 0, 30)
 teamCheckButton.Text = "Team Check: " .. (useTeamCheck and "ON" or "OFF")
 teamCheckButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 teamCheckButton.TextColor3 = Color3.new(1, 1, 1)
 teamCheckButton.Font = Enum.Font.SciFi
-teamCheckButton.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
+teamCheckButton.ZIndex = 10
 teamCheckButton.Parent = scrollingFrame
 
--- Закругленные углы для кнопки проверки команды
 local teamCheckCorner = Instance.new("UICorner")
 teamCheckCorner.CornerRadius = UDim.new(0, 6)
 teamCheckCorner.Parent = teamCheckButton
@@ -254,17 +342,16 @@ teamCheckButton.MouseButton1Click:Connect(function()
     teamCheckButton.Text = "Team Check: " .. (useTeamCheck and "ON" or "OFF")
 end)
 
--- Кнопка переключения проверки стен
+-- Wall Check button
 local wallCheckButton = Instance.new("TextButton")
 wallCheckButton.Size = UDim2.new(1, 0, 0, 30)
 wallCheckButton.Text = "Wall Check: " .. (useWallCheck and "ON" or "OFF")
 wallCheckButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 wallCheckButton.TextColor3 = Color3.new(1, 1, 1)
 wallCheckButton.Font = Enum.Font.SciFi
-wallCheckButton.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
+wallCheckButton.ZIndex = 10
 wallCheckButton.Parent = scrollingFrame
 
--- Закругленные углы для кнопки проверки стен
 local wallCheckCorner = Instance.new("UICorner")
 wallCheckCorner.CornerRadius = UDim.new(0, 6)
 wallCheckCorner.Parent = wallCheckButton
@@ -274,17 +361,16 @@ wallCheckButton.MouseButton1Click:Connect(function()
     wallCheckButton.Text = "Wall Check: " .. (useWallCheck and "ON" or "OFF")
 end)
 
--- Выбор целевой части (Head или Torso)
+-- Target Part button
 local targetPartButton = Instance.new("TextButton")
 targetPartButton.Size = UDim2.new(1, 0, 0, 30)
 targetPartButton.Text = "Target: " .. targetPart
 targetPartButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 targetPartButton.TextColor3 = Color3.new(1, 1, 1)
 targetPartButton.Font = Enum.Font.SciFi
-targetPartButton.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
+targetPartButton.ZIndex = 10
 targetPartButton.Parent = scrollingFrame
 
--- Закругленные углы для кнопки выбора целевой части
 local targetPartCorner = Instance.new("UICorner")
 targetPartCorner.CornerRadius = UDim.new(0, 6)
 targetPartCorner.Parent = targetPartButton
@@ -292,20 +378,19 @@ targetPartCorner.Parent = targetPartButton
 targetPartButton.MouseButton1Click:Connect(function()
     targetPart = (targetPart == "Head" and "Torso" or "Head")
     targetPartButton.Text = "Target: " .. targetPart
-    currentTarget = nil -- Сброс цели при изменении целевой части
+    currentTarget = nil
 end)
 
--- Кнопка фиксации цели
+-- Lock On button
 local lockOnButton = Instance.new("TextButton")
 lockOnButton.Size = UDim2.new(1, 0, 0, 30)
 lockOnButton.Text = "Lock On: " .. (lockOnTarget and "ON" or "OFF")
 lockOnButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 lockOnButton.TextColor3 = Color3.new(1, 1, 1)
 lockOnButton.Font = Enum.Font.SciFi
-lockOnButton.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
+lockOnButton.ZIndex = 10
 lockOnButton.Parent = scrollingFrame
 
--- Закругленные углы для кнопки фиксации цели
 local lockOnCorner = Instance.new("UICorner")
 lockOnCorner.CornerRadius = UDim.new(0, 6)
 lockOnCorner.Parent = lockOnButton
@@ -314,27 +399,26 @@ lockOnButton.MouseButton1Click:Connect(function()
     lockOnTarget = not lockOnTarget
     lockOnButton.Text = "Lock On: " .. (lockOnTarget and "ON" or "OFF")
     if not lockOnTarget then
-        currentTarget = nil -- Сброс цели при отключении фиксации
+        currentTarget = nil
     end
 end)
 
--- Кнопка свертывания
+-- Minimize button
 local minimizeButton = Instance.new("TextButton")
 minimizeButton.Size = UDim2.new(0, 30, 0, 30)
-minimizeButton.Position = UDim2.new(1, -35, 0, 5) -- Перемещено вверх, чтобы избежать наложения
+minimizeButton.Position = UDim2.new(1, -35, 0, 5)
 minimizeButton.Text = "-"
 minimizeButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 minimizeButton.TextColor3 = Color3.new(1, 1, 1)
 minimizeButton.Font = Enum.Font.SciFi
-minimizeButton.ZIndex = 11 -- Установим ZIndex для отображения поверх всех элементов
+minimizeButton.ZIndex = 11
 minimizeButton.Parent = background
 
--- Закругленные углы для кнопки свертывания
 local minimizeCorner = Instance.new("UICorner")
 minimizeCorner.CornerRadius = UDim.new(0, 6)
 minimizeCorner.Parent = minimizeButton
 
--- Кнопка восстановления интерфейса (K)
+-- K button for restoring the interface
 local kButton = Instance.new("TextButton")
 kButton.Size = UDim2.new(0, 40, 0, 40)
 kButton.Position = UDim2.new(0, 10, 0, 10)
@@ -344,25 +428,22 @@ kButton.TextColor3 = Color3.new(1, 1, 0)
 kButton.Font = Enum.Font.SciFi
 kButton.TextSize = 20
 kButton.Visible = false
-kButton.ZIndex = 11 -- Установим ZIndex для отображения поверх всех элементов
+kButton.ZIndex = 11
 kButton.Parent = screenGui
 
--- Закругленные углы для кнопки K
 local kCorner = Instance.new("UICorner")
 kCorner.CornerRadius = UDim.new(0, 8)
 kCorner.Parent = kButton
 
--- Неоновая обводка для кнопки K
 local kOutline = Instance.new("UIStroke")
 kOutline.Color = Color3.new(1, 1, 0)
 kOutline.Thickness = 2
 kOutline.Parent = kButton
 
--- Анимация обводки кнопки K
 local kTween = TweenService:Create(kOutline, tweenInfo, {Color = Color3.new(1, 0.8, 0)})
 kTween:Play()
 
--- Перетаскивание кнопки K
+-- Drag functionality for K button
 local kDragging = false
 local kDragStartPos
 local kGuiStartPos
@@ -392,7 +473,7 @@ kButton.InputChanged:Connect(function(input)
     end
 end)
 
--- Логика свертывания/восстановления
+-- Minimize/Restore logic
 minimizeButton.MouseButton1Click:Connect(function()
     background.Visible = false
     minimizeButton.Visible = false
@@ -405,29 +486,29 @@ kButton.MouseButton1Click:Connect(function()
     kButton.Visible = false
 end)
 
--- Кнопка для скрытия круга
-local hideCircleButton = Instance.new("TextButton")
-hideCircleButton.Size = UDim2.new(1, 0, 0, 30)
-hideCircleButton.Text = "Hide Circle"
-hideCircleButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
-hideCircleButton.TextColor3 = Color3.new(1, 1, 1)
-hideCircleButton.Font = Enum.Font.SciFi
-hideCircleButton.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
-hideCircleButton.Parent = scrollingFrame
+-- ESP Toggle button
+local espToggleButton = Instance.new("TextButton")
+espToggleButton.Size = UDim2.new(1, 0, 0, 30)
+espToggleButton.Text = "ESP: ON"
+espToggleButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+espToggleButton.TextColor3 = Color3.new(1, 1, 1)
+espToggleButton.Font = Enum.Font.SciFi
+espToggleButton.ZIndex = 10
+espToggleButton.Parent = scrollingFrame
 
--- Закругленные углы для кнопки скрытия круга
-local hideCircleCorner = Instance.new("UICorner")
-hideCircleCorner.CornerRadius = UDim.new(0, 6)
-hideCircleCorner.Parent = hideCircleButton
+local espToggleCorner = Instance.new("UICorner")
+espToggleCorner.CornerRadius = UDim.new(0, 6)
+espToggleCorner.Parent = espToggleButton
 
-hideCircleButton.MouseButton1Click:Connect(function()
-    drawing.Visible = not drawing.Visible
-    hideCircleButton.Text = drawing.Visible and "Hide Circle" or "Show Circle"
+espToggleButton.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    espToggleButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
 end)
 
--- Основной цикл для прицеливания
-game:GetService("RunService").RenderStepped:Connect(function()
+-- Main loop for aiming and ESP
+RunService.RenderStepped:Connect(function()
     if aiming then
         aimAtTarget()
     end
+    UpdateESP()
 end)
