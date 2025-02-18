@@ -6,6 +6,7 @@ local Camera = workspace.CurrentCamera
 
 -- Define colors
 local Blue = Color3.fromRGB(0, 0, 255)
+local White = Color3.fromRGB(255, 255, 255)
 
 -- Teleport settings
 local player = Players.LocalPlayer
@@ -19,7 +20,7 @@ screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 local background = Instance.new("Frame")
 background.Size = UDim2.new(0, 220, 0, 150)
 background.Position = UDim2.new(0, 10, 0, 10)
-background.BackgroundColor3 = Color3.new(0, 0, 0.5) -- Dark blue background
+background.BackgroundColor3 = Color3.new(0, 0, 0) -- Black background
 background.BorderSizePixel = 0
 background.ZIndex = 10
 background.Parent = screenGui
@@ -44,7 +45,7 @@ tween:Play()
 local dragBar = Instance.new("Frame")
 dragBar.Size = UDim2.new(1, 0, 0, 20)
 dragBar.Position = UDim2.new(0, 0, 0, 0)
-dragBar.BackgroundColor3 = Color3.new(0, 0, 0.5) -- Dark blue background
+dragBar.BackgroundColor3 = White -- White background for drag bar
 dragBar.BorderSizePixel = 0
 dragBar.ZIndex = 11
 dragBar.Parent = background
@@ -87,10 +88,10 @@ end)
 local nameInput = Instance.new("TextBox")
 nameInput.Size = UDim2.new(1, -20, 0, 30)
 nameInput.Position = UDim2.new(0, 10, 0, 40)
-nameInput.BackgroundColor3 = Color3.new(0, 0, 0.3) -- Slightly lighter blue
-nameInput.TextColor3 = Color3.new(1, 1, 1)
-nameInput.PlaceholderText = "Enter Player Name or Display Name"
+nameInput.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark grey background for text box
+nameInput.TextColor3 = White
 nameInput.Font = Enum.Font.SciFi
+nameInput.TextSize = 18 -- Increased text size
 nameInput.ZIndex = 10
 nameInput.Parent = background
 
@@ -103,9 +104,10 @@ local teleportButton = Instance.new("TextButton")
 teleportButton.Size = UDim2.new(1, -20, 0, 30)
 teleportButton.Position = UDim2.new(0, 10, 0, 80)
 teleportButton.Text = "Teleport"
-teleportButton.BackgroundColor3 = Color3.new(0, 0, 0.3) -- Slightly lighter blue
-teleportButton.TextColor3 = Color3.new(1, 1, 1)
+teleportButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Dark grey background for button
+teleportButton.TextColor3 = White
 teleportButton.Font = Enum.Font.SciFi
+teleportButton.TextSize = 18 -- Increased text size
 teleportButton.ZIndex = 10
 teleportButton.Parent = background
 
