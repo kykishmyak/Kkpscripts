@@ -19,6 +19,7 @@ local targetPart = "Head" -- Default target part (Head or Torso)
 local lockOnTarget = false -- Lock onto target until death or out of radius
 local currentTarget = nil -- Current locked target
 local espEnabled = true -- Toggle for ESP functionality
+local teleportEnabled = false -- Toggle for teleportation functionality
 
 -- ESP settings
 local esp = {}
@@ -99,6 +100,16 @@ local function aimAtTarget()
         if distanceToCenter <= radius and isTargetVisible(currentTarget.Position) then
             Camera.CFrame = CFrame.new(Camera.CFrame.Position, currentTarget.Position)
             drawing.Color = Color3.new(0, 1, 0)
+
+            -- Teleport the player behind the target if enabled
+            if teleportEnabled then
+                local targetPosition = currentTarget.Position
+                local behindTarget = targetPosition - (Camera.CFrame.LookVector * 5) -- Adjust the distance as needed
+                local character = player.Character or player.CharacterAdded:Wait()
+                local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+                humanoidRootPart.CFrame = CFrame.new(behindTarget)
+            end
+
             return
         else
             currentTarget = nil -- Target out of radius, reset
@@ -111,6 +122,15 @@ local function aimAtTarget()
         currentTarget = target
         Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
         drawing.Color = Color3.new(0, 1, 0)
+
+        -- Teleport the player behind the target if enabled
+        if teleportEnabled then
+            local targetPosition = currentTarget.Position
+            local behindTarget = targetPosition - (Camera.CFrame.LookVector * 5) -- Adjust the distance as needed
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+            humanoidRootPart.CFrame = CFrame.new(behindTarget)
+        end
     else
         drawing.Color = Color3.new(1, 0, 0)
     end
@@ -524,6 +544,25 @@ espToggleCorner.Parent = espToggleButton
 espToggleButton.MouseButton1Click:Connect(function()
     espEnabled = not espEnabled
     espToggleButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
+end)
+
+-- Teleport Toggle button
+local teleportToggleButton = Instance.new("TextButton")
+teleportToggleButton.Size = UDim2.new(1, 0, 0, 30)
+teleportToggleButton.Text = "Teleport: OFF"
+teleportToggleButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+teleportToggleButton.TextColor3 = Color3.new(1, 1, 1)
+teleportToggleButton.Font = Enum.Font.SciFi
+teleportToggleButton.ZIndex = 10
+teleportToggleButton.Parent = scrollingFrame
+
+local teleportToggleCorner = Instance.new("UICorner")
+teleportToggleCorner.CornerRadius = UDim.new(0, 6)
+teleportToggleCorner.Parent = teleportToggleButton
+
+teleportToggleButton.MouseButton1Click:Connect(function()
+    teleportEnabled = not teleportEnabled
+    teleportToggleButton.Text = "Teleport: " .. (teleportEnabled and "ON" or "OFF")
 end)
 
 -- Handle character respawn
