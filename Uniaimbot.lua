@@ -94,7 +94,7 @@ screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
 -- Фон
 local background = Instance.new("Frame")
-background.Size = UDim2.new(0, 220, 0, 260) -- Увеличена высота для новой кнопки
+background.Size = UDim2.new(0, 220, 0, 300) -- Увеличена высота для новой кнопки
 background.Position = UDim2.new(0, 10, 0, 10)
 background.BackgroundColor3 = Color3.new(0, 0, 0)
 background.BorderSizePixel = 0
@@ -160,15 +160,29 @@ dragBar.InputChanged:Connect(function(input)
     end
 end)
 
+-- ScrollingFrame для кнопок
+local scrollingFrame = Instance.new("ScrollingFrame")
+scrollingFrame.Size = UDim2.new(1, -20, 1, -60)
+scrollingFrame.Position = UDim2.new(0, 10, 0, 40)
+scrollingFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+scrollingFrame.BorderSizePixel = 0
+scrollingFrame.ScrollBarThickness = 8
+scrollingFrame.CanvasSize = UDim2.new(0, 0, 2, 0) -- Установите высоту CanvasSize для прокрутки
+scrollingFrame.Parent = background
+
+-- Layout для автоматического размещения кнопок
+local layout = Instance.new("UIListLayout")
+layout.Padding = UDim.new(0, 5)
+layout.Parent = scrollingFrame
+
 -- Кнопка переключения прицеливания
 local toggleButton = Instance.new("TextButton")
-toggleButton.Size = UDim2.new(0, 200, 0, 30)
-toggleButton.Position = UDim2.new(0, 10, 0, 30) -- Смещено вниз, чтобы освободить место для dragBar
+toggleButton.Size = UDim2.new(1, 0, 0, 30)
 toggleButton.Text = "Toggle Aim"
 toggleButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 toggleButton.TextColor3 = Color3.new(1, 1, 1)
 toggleButton.Font = Enum.Font.SciFi
-toggleButton.Parent = background
+toggleButton.Parent = scrollingFrame
 
 -- Закругленные углы для кнопок
 local buttonCorner = Instance.new("UICorner")
@@ -186,13 +200,12 @@ end)
 
 -- Ввод радиуса
 local radiusInput = Instance.new("TextBox")
-radiusInput.Size = UDim2.new(0, 200, 0, 30)
-radiusInput.Position = UDim2.new(0, 10, 0, 70) -- Смещено вниз
+radiusInput.Size = UDim2.new(1, 0, 0, 30)
 radiusInput.Text = "Radius: " .. radius
 radiusInput.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 radiusInput.TextColor3 = Color3.new(1, 1, 1)
 radiusInput.Font = Enum.Font.SciFi
-radiusInput.Parent = background
+radiusInput.Parent = scrollingFrame
 
 -- Закругленные углы для текстового поля
 local textBoxCorner = Instance.new("UICorner")
@@ -217,13 +230,12 @@ end)
 
 -- Кнопка переключения проверки команды
 local teamCheckButton = Instance.new("TextButton")
-teamCheckButton.Size = UDim2.new(0, 200, 0, 30)
-teamCheckButton.Position = UDim2.new(0, 10, 0, 110) -- Смещено вниз
+teamCheckButton.Size = UDim2.new(1, 0, 0, 30)
 teamCheckButton.Text = "Team Check: " .. (useTeamCheck and "ON" or "OFF")
 teamCheckButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 teamCheckButton.TextColor3 = Color3.new(1, 1, 1)
 teamCheckButton.Font = Enum.Font.SciFi
-teamCheckButton.Parent = background
+teamCheckButton.Parent = scrollingFrame
 
 -- Закругленные углы для кнопки проверки команды
 local teamCheckCorner = Instance.new("UICorner")
@@ -237,13 +249,12 @@ end)
 
 -- Кнопка переключения проверки стен
 local wallCheckButton = Instance.new("TextButton")
-wallCheckButton.Size = UDim2.new(0, 200, 0, 30)
-wallCheckButton.Position = UDim2.new(0, 10, 0, 150) -- Смещено вниз
+wallCheckButton.Size = UDim2.new(1, 0, 0, 30)
 wallCheckButton.Text = "Wall Check: " .. (useWallCheck and "ON" or "OFF")
 wallCheckButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 wallCheckButton.TextColor3 = Color3.new(1, 1, 1)
 wallCheckButton.Font = Enum.Font.SciFi
-wallCheckButton.Parent = background
+wallCheckButton.Parent = scrollingFrame
 
 -- Закругленные углы для кнопки проверки стен
 local wallCheckCorner = Instance.new("UICorner")
@@ -257,13 +268,12 @@ end)
 
 -- Выбор целевой части (Head или Torso)
 local targetPartButton = Instance.new("TextButton")
-targetPartButton.Size = UDim2.new(0, 200, 0, 30)
-targetPartButton.Position = UDim2.new(0, 10, 0, 190) -- Смещено вниз
+targetPartButton.Size = UDim2.new(1, 0, 0, 30)
 targetPartButton.Text = "Target: " .. targetPart
 targetPartButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 targetPartButton.TextColor3 = Color3.new(1, 1, 1)
 targetPartButton.Font = Enum.Font.SciFi
-targetPartButton.Parent = background
+targetPartButton.Parent = scrollingFrame
 
 -- Закругленные углы для кнопки выбора целевой части
 local targetPartCorner = Instance.new("UICorner")
@@ -278,13 +288,12 @@ end)
 
 -- Кнопка фиксации цели
 local lockOnButton = Instance.new("TextButton")
-lockOnButton.Size = UDim2.new(0, 200, 0, 30)
-lockOnButton.Position = UDim2.new(0, 10, 0, 230) -- Смещено вниз
+lockOnButton.Size = UDim2.new(1, 0, 0, 30)
 lockOnButton.Text = "Lock On: " .. (lockOnTarget and "ON" or "OFF")
 lockOnButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 lockOnButton.TextColor3 = Color3.new(1, 1, 1)
 lockOnButton.Font = Enum.Font.SciFi
-lockOnButton.Parent = background
+lockOnButton.Parent = scrollingFrame
 
 -- Закругленные углы для кнопки фиксации цели
 local lockOnCorner = Instance.new("UICorner")
@@ -302,7 +311,7 @@ end)
 -- Кнопка свертывания
 local minimizeButton = Instance.new("TextButton")
 minimizeButton.Size = UDim2.new(0, 30, 0, 30)
-minimizeButton.Position = UDim2.new(0, 180, 0, 260) -- Перемещено вниз, чтобы избежать наложения
+minimizeButton.Position = UDim2.new(1, -35, 0, 5) -- Перемещено вверх, чтобы избежать наложения
 minimizeButton.Text = "-"
 minimizeButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 minimizeButton.TextColor3 = Color3.new(1, 1, 1)
@@ -382,6 +391,25 @@ kButton.MouseButton1Click:Connect(function()
     background.Visible = true
     minimizeButton.Visible = true
     kButton.Visible = false
+end)
+
+-- Кнопка для скрытия круга
+local hideCircleButton = Instance.new("TextButton")
+hideCircleButton.Size = UDim2.new(1, 0, 0, 30)
+hideCircleButton.Text = "Hide Circle"
+hideCircleButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+hideCircleButton.TextColor3 = Color3.new(1, 1, 1)
+hideCircleButton.Font = Enum.Font.SciFi
+hideCircleButton.Parent = scrollingFrame
+
+-- Закругленные углы для кнопки скрытия круга
+local hideCircleCorner = Instance.new("UICorner")
+hideCircleCorner.CornerRadius = UDim.new(0, 6)
+hideCircleCorner.Parent = hideCircleButton
+
+hideCircleButton.MouseButton1Click:Connect(function()
+    drawing.Visible = not drawing.Visible
+    hideCircleButton.Text = drawing.Visible and "Hide Circle" or "Show Circle"
 end)
 
 -- Основной цикл для прицеливания
