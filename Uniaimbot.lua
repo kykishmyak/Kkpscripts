@@ -91,6 +91,7 @@ end
 -- Создание интерфейса
 local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 -- Фон
 local background = Instance.new("Frame")
@@ -98,6 +99,7 @@ background.Size = UDim2.new(0, 220, 0, 300) -- Увеличена высота �
 background.Position = UDim2.new(0, 10, 0, 10)
 background.BackgroundColor3 = Color3.new(0, 0, 0)
 background.BorderSizePixel = 0
+background.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
 background.Parent = screenGui
 
 -- Закругленные углы
@@ -120,9 +122,10 @@ tween:Play()
 -- Панель перетаскивания (для перетаскивания интерфейса)
 local dragBar = Instance.new("Frame")
 dragBar.Size = UDim2.new(1, 0, 0, 20) -- Увеличена высота для удобства перетаскивания
-dragBar.Position = UDim2.new(0, 0, 0, 0) -- Перемещено вверх интерфейса
+dragBar.Position = UDim2.new(0, 0, 1, 10) -- Перемещено ниже основного GUI
 dragBar.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
 dragBar.BorderSizePixel = 0
+dragBar.ZIndex = 11 -- Установим ZIndex для отображения поверх всех элементов
 dragBar.Parent = background
 
 -- Закругленные углы для панели перетаскивания
@@ -168,6 +171,7 @@ scrollingFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 scrollingFrame.BorderSizePixel = 0
 scrollingFrame.ScrollBarThickness = 8
 scrollingFrame.CanvasSize = UDim2.new(0, 0, 2, 0) -- Установите высоту CanvasSize для прокрутки
+scrollingFrame.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
 scrollingFrame.Parent = background
 
 -- Layout для автоматического размещения кнопок
@@ -182,6 +186,7 @@ toggleButton.Text = "Toggle Aim"
 toggleButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 toggleButton.TextColor3 = Color3.new(1, 1, 1)
 toggleButton.Font = Enum.Font.SciFi
+toggleButton.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
 toggleButton.Parent = scrollingFrame
 
 -- Закругленные углы для кнопок
@@ -205,6 +210,7 @@ radiusInput.Text = "Radius: " .. radius
 radiusInput.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 radiusInput.TextColor3 = Color3.new(1, 1, 1)
 radiusInput.Font = Enum.Font.SciFi
+radiusInput.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
 radiusInput.Parent = scrollingFrame
 
 -- Закругленные углы для текстового поля
@@ -235,6 +241,7 @@ teamCheckButton.Text = "Team Check: " .. (useTeamCheck and "ON" or "OFF")
 teamCheckButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 teamCheckButton.TextColor3 = Color3.new(1, 1, 1)
 teamCheckButton.Font = Enum.Font.SciFi
+teamCheckButton.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
 teamCheckButton.Parent = scrollingFrame
 
 -- Закругленные углы для кнопки проверки команды
@@ -254,6 +261,7 @@ wallCheckButton.Text = "Wall Check: " .. (useWallCheck and "ON" or "OFF")
 wallCheckButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 wallCheckButton.TextColor3 = Color3.new(1, 1, 1)
 wallCheckButton.Font = Enum.Font.SciFi
+wallCheckButton.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
 wallCheckButton.Parent = scrollingFrame
 
 -- Закругленные углы для кнопки проверки стен
@@ -273,6 +281,7 @@ targetPartButton.Text = "Target: " .. targetPart
 targetPartButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 targetPartButton.TextColor3 = Color3.new(1, 1, 1)
 targetPartButton.Font = Enum.Font.SciFi
+targetPartButton.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
 targetPartButton.Parent = scrollingFrame
 
 -- Закругленные углы для кнопки выбора целевой части
@@ -293,6 +302,7 @@ lockOnButton.Text = "Lock On: " .. (lockOnTarget and "ON" or "OFF")
 lockOnButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 lockOnButton.TextColor3 = Color3.new(1, 1, 1)
 lockOnButton.Font = Enum.Font.SciFi
+lockOnButton.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
 lockOnButton.Parent = scrollingFrame
 
 -- Закругленные углы для кнопки фиксации цели
@@ -316,6 +326,7 @@ minimizeButton.Text = "-"
 minimizeButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 minimizeButton.TextColor3 = Color3.new(1, 1, 1)
 minimizeButton.Font = Enum.Font.SciFi
+minimizeButton.ZIndex = 11 -- Установим ZIndex для отображения поверх всех элементов
 minimizeButton.Parent = background
 
 -- Закругленные углы для кнопки свертывания
@@ -333,6 +344,7 @@ kButton.TextColor3 = Color3.new(1, 1, 0)
 kButton.Font = Enum.Font.SciFi
 kButton.TextSize = 20
 kButton.Visible = false
+kButton.ZIndex = 11 -- Установим ZIndex для отображения поверх всех элементов
 kButton.Parent = screenGui
 
 -- Закругленные углы для кнопки K
@@ -400,6 +412,7 @@ hideCircleButton.Text = "Hide Circle"
 hideCircleButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 hideCircleButton.TextColor3 = Color3.new(1, 1, 1)
 hideCircleButton.Font = Enum.Font.SciFi
+hideCircleButton.ZIndex = 10 -- Установим ZIndex для отображения поверх всех элементов
 hideCircleButton.Parent = scrollingFrame
 
 -- Закругленные углы для кнопки скрытия круга
